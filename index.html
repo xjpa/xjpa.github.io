@@ -11,6 +11,8 @@
       }
       body {
         font-family: Menlo, 'Lucida Console', monospace;
+        overflow: hidden; /* temporary hack for canvas -- to  prevent scrolling */
+
       }
       #content {
         display: flex;
@@ -19,54 +21,69 @@
       #right {
         flex: 50%;
       }
+      #threejs-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        background-color: #FFFFF0; 
+      }
     </style>
   </head>
   <body
-    bgcolor="#FFFFF"
+    bgcolor="#FFFFF0"
     text="#000000"
     link="#3104B4"
     vlink="#3104B4"
     alink="#3104B4"
   >
+    <div id="threejs-background"></div>
     <main>
-      <table cellpadding="20">
-        <tr>
-          <td>
-            <a href="me.jpeg"><img src="me.jpeg" width="300" /></a>
-          </td>
-          <td>
-            <h2>Hi I'm John</h2>
-            <p>Web Systems ∩ Machine Learning</p>
-            <table cellpadding="5">
-              <tr>
-                <td>
-                  <img src="email.png" width="24" />
-                </td>
-                <td>xjpa at proton.me</td>
-              </tr>
-              <tr>
-                <td>
-                  <img src="github.png" width="24" />
-                </td>
-                <td>
-                  <a href="https://github.com/xjpa">xjpa</a>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </main>
+        <table cellpadding="20">
+          <tr>
+            <td>
+              <a href="me.jpeg"><img src="me.jpeg" width="300" /></a>
+            </td>
+            <td>
+              <h2>Hi I'm John</h2>
+              <p>Web Systems ∩ Machine Learning</p>
+              <table cellpadding="5">
+                <tr>
+                  <td>
+                    <img src="email.png" width="24" />
+                  </td>
+                  <td><p id="myText" onclick="changeText()">[click to view email]</p></td>
+                </tr>
+                <tr>
+                  <td>
+                    <img src="github.png" width="24" />
+                  </td>
+                  <td>
+                    <a href="https://github.com/xjpa">xjpa</a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </main>
     <div>
       <ul>
+        <li><a href="https://www.imdb.com/title/tt15239678/">Dune</a> music: <input type="button" value="play/pause" onclick="playMusic()" /> <input type="button" value="stop" onclick="stopMusic()" />        </li>
         <li>
-          <b><a href="#">personal website</a></b> - to be added soon
+          <b><a href="#">personal website</a></b> - visit soon; under construction
         </li>
-        <li>
-          <b><a href="https://john.bearblog.dev/">john.bearblog.dev</a></b> - my
-          unfiltered/rawer thought dump
-        </li>
+        <li><b><a href="https://john.bearblog.dev">john.bearblog.dev</a></b> - my unfiltered, rawer thought dump</li>
+        <li><b><a href="https://github.com/xjpa/gattiDB">gattiDB</a></b> - building a DB + server to learn DB internals</li>
+        <li><b><a href="https://github.com/xjpa/100daysofcode">100daysofcode</a></b> - 2024 challenge. 100 days, 100+ tiny projects</li>
       </ul>
     </div>
+    <script src="three.min.js"></script>
+    <script src="simplexnoise.js"></script>
+    <script src="email.js"></script>
+    <script src="script.js"></script>
+    </script>
   </body>
 </html>
