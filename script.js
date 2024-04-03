@@ -4,7 +4,7 @@ var isPlaying = false; // for pausing, to keep track of playback state
 function playMusic() {
   if (music === null || music.paused) {
     if (music === null) {
-      music = new Audio('dune.mp3');
+      music = new Audio('atreides.mp3');
       music.addEventListener('ended', function () {
         isPlaying = false;
       });
