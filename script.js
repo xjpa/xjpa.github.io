@@ -25,9 +25,20 @@ function stopMusic() {
   }
 }
 
-// Dune shit
+// dune shit
 var scene, camera, renderer, terrain, terrainGeometry, simplex, clock;
 var terrainResolution = 100; // for geometry division
+
+// camera
+var isMouseDown = false;
+var mouseX = 0;
+var targetRotationX = 0;
+var targetRotationOnMouseDownX = 0;
+var mouseXOnMouseDown = 0;
+
+// atmosphere, where i put some sand particles here
+var skybox;
+var sandParticles;
 
 function init() {
   simplex = new SimplexNoise();
@@ -80,7 +91,82 @@ function init() {
   terrain = new THREE.Mesh(terrainGeometry, material);
   scene.add(terrain);
 
+  // fog-like
+  scene.fog = new THREE.FogExp2(0xedce7e, 0.0007);
+
+  // skybox
+  var skyboxGeometry = new THREE.BoxGeometry(10000, 10000, 10000);
+  var skyboxMaterials = [
+    new THREE.MeshBasicMaterial({
+      map: new THREE.TextureLoader().load('right.jpg'),
+      side: THREE.BackSide,
+    }),
+    new THREE.MeshBasicMaterial({
+      map: new THREE.TextureLoader().load('left.jpg'),
+      side: THREE.BackSide,
+    }),
+    new THREE.MeshBasicMaterial({
+      map: new THREE.TextureLoader().load('top.jpg'),
+      side: THREE.BackSide,
+    }),
+    new THREE.MeshBasicMaterial({
+      map: new THREE.TextureLoader().load('bottom.jpg'),
+      side: THREE.BackSide,
+    }),
+    new THREE.MeshBasicMaterial({
+      map: new THREE.TextureLoader().load('front.jpg'),
+      side: THREE.BackSide,
+    }),
+    new THREE.MeshBasicMaterial({
+      map: new THREE.TextureLoader().load('back.jpg'),
+      side: THREE.BackSide,
+    }),
+  ];
+  skybox = new THREE.Mesh(skyboxGeometry, skyboxMaterials);
+  scene.add(skybox);
+
+  // particle system for wind-blown sand, or at least i think it looks like it
+  sandParticles = createSandParticles();
+  scene.add(sandParticles);
+
   updateTerrain(0);
+
+  // mouse
+  document.addEventListener('mousedown', onDocumentMouseDown, false);
+  document.addEventListener('mousemove', onDocumentMouseMove, false);
+  document.addEventListener('mouseup', onDocumentMouseUp, false);
+
+  // touch
+  document.addEventListener('touchstart', onDocumentTouchStart, false);
+  document.addEventListener('touchmove', onDocumentTouchMove, false);
+  document.addEventListener('touchend', onDocumentTouchEnd, false);
+}
+
+function createSandParticles() {
+  var particleGeometry = new THREE.BufferGeometry();
+  var particleCount = 10000;
+  var particlePositions = new Float32Array(particleCount * 3);
+
+  for (let i = 0; i < particleCount * 3; i += 3) {
+    particlePositions[i] = Math.random() * 1000 - 500; // x
+    particlePositions[i + 1] = Math.random() * 100; // y (keep it low to the ground)
+    particlePositions[i + 2] = Math.random() * 1000 - 500; // z
+  }
+
+  particleGeometry.setAttribute(
+    'position',
+    new THREE.BufferAttribute(particlePositions, 3)
+  );
+
+  var particleMaterial = new THREE.PointsMaterial({
+    color: 0xd4a76a,
+    size: 1,
+    blending: THREE.AdditiveBlending,
+    transparent: true,
+    opacity: 0.5,
+  });
+
+  return new THREE.Points(particleGeometry, particleMaterial);
 }
 
 function updateTerrain(time) {
@@ -92,7 +178,7 @@ function updateTerrain(time) {
     var z = Math.floor(j / 3 / (terrainResolution + 1));
     var y = simplex.noise(x * 0.1, z * 0.1 + time * 0.05) * 50;
 
-    // for updating vertx height
+    // for updating vertex height
     vertices[i + 1] = y;
 
     // for determining color based on the height (y)
@@ -125,7 +211,70 @@ function animate() {
 
   updateTerrain(elapsedTime);
 
+  // update camera rotation (only horizontal for now)
+  camera.position.x = 300 * Math.sin(targetRotationX);
+  camera.position.z = 300 * Math.cos(targetRotationX);
+  camera.lookAt(scene.position);
+
+  // animate wind-blown sand particles
+  var positions = sandParticles.geometry.attributes.position.array;
+  for (let i = 0; i < positions.length; i += 3) {
+    // move sand particles from left to right
+    positions[i] += 0.5 + Math.random() * 0.5;
+
+    // for if particle moves out of view, reset to left
+    if (positions[i] > 500) {
+      positions[i] = -500;
+      positions[i + 1] = Math.random() * 100; // randomize height
+      positions[i + 2] = Math.random() * 1000 - 500; // randomize depth
+    }
+  }
+  sandParticles.geometry.attributes.position.needsUpdate = true;
+
+  // slowly rotate skybox for some illusion :)
+  skybox.rotation.y += 0.0001;
+
   renderer.render(scene, camera);
+}
+
+function onDocumentMouseDown(event) {
+  event.preventDefault();
+  isMouseDown = true;
+  mouseXOnMouseDown = event.clientX - window.innerWidth / 2;
+  targetRotationOnMouseDownX = targetRotationX;
+}
+
+function onDocumentMouseMove(event) {
+  if (isMouseDown) {
+    mouseX = event.clientX - window.innerWidth / 2;
+    targetRotationX =
+      targetRotationOnMouseDownX + (mouseX - mouseXOnMouseDown) * 0.02;
+  }
+}
+
+function onDocumentMouseUp(event) {
+  isMouseDown = false;
+}
+
+function onDocumentTouchStart(event) {
+  if (event.touches.length == 1) {
+    event.preventDefault();
+    mouseXOnMouseDown = event.touches[0].pageX - window.innerWidth / 2;
+    targetRotationOnMouseDownX = targetRotationX;
+  }
+}
+
+function onDocumentTouchMove(event) {
+  if (event.touches.length == 1) {
+    event.preventDefault();
+    mouseX = event.touches[0].pageX - window.innerWidth / 2;
+    targetRotationX =
+      targetRotationOnMouseDownX + (mouseX - mouseXOnMouseDown) * 0.02;
+  }
+}
+
+function onDocumentTouchEnd(event) {
+  isMouseDown = false;
 }
 
 init();
